@@ -10,55 +10,47 @@ var client = tumblr.createClient({
   consumer_secret: 'zWj97duJPOGIDVBiReyjHu1yDcYsuqqNcU8MltjIWQot2ucsaD'
 });
 
-var latestPosts;
+var csvFile = fs.readFileSync("friend_list.csv","utf8"); //get the contact list in csv format
+var htmlFile = fs.readFileSync("email_template.html","utf8"); //get the email that we're going to send
+var contacts = csvParse(csvFile);//convert the csv-format contact list to an array of contact objects
+
 client.posts('ldthorne.tumblr.com', function(err, blog){
   	var latestPosts=[];
   	blog.posts.forEach(function(post){
-  	var currentDate = new Date();
-  	var postDate = new Date(post["date"])
-		if(((currentDate-postDate)/(1000*60*60*24))<=7 && post["title"]!== undefined){ //got "undefined" back because image posts don't have a title but they're considered posts
-			var blogInfo = {
-				title: post["title"],
-				href: post["post_url"]
+	  	var currentDate = new Date(); //date right now
+	  	var postDate = new Date(post["date"]); //date of post
+			if(((currentDate-postDate)/(1000*60*60*24))<=7 && post["title"]!== undefined){ //got "undefined" back because image posts don't have a title but they're considered posts
+				var postInfo = { //create postInfo object with a title and link property
+					title: post["title"],
+					link: post["post_url"]
 
-			};
-			latestPosts.push(blogInfo)
-		}
-	});
-	forEachContact(latestPosts)
+				};
+				latestPosts.push(postInfo); //push the postInfo object to the array of objects
+			}
+		});
+		forEachContact(latestPosts);//pass through the latestPosts array of object to the forEachContactFunction
 });
 
-var csvFile = fs.readFileSync("friend_list.csv","utf8");
-var htmlFile = fs.readFileSync("email_template.html","utf8");
-var contacts = csvParse(csvFile);
-function forEachContact(latestPosts){
-	contacts.forEach(function(contact){
-		firstName = contact["firstName"];
-		numMonths = contact["numMonthsSinceContact"];
-		var newTemplate = ejs.render(htmlFile,
+function forEachContact(latestPosts){ //function to send an email to every contact
+	contacts.forEach(function(contact){ //forEach contact in the array of contacts
+		firstName = contact["firstName"]; //get first name
+		numMonths = contact["numMonthsSinceContact"]; //get num months since contact
+		var newTemplate = ejs.render(htmlFile, //create a new template, passing through their name, num months since contact, and the latestPosts array of objects
 			{
 				firstName:firstName,
 				numMonthsSinceContact: numMonths,
 				latestPosts: latestPosts
 			});
-		sendEmail(firstName, row["emailAddress"], "Leon Thorne", "ldthorne@brandeis.edu", "Life updates!", newTemplate);			
-		console.log("Emails should have been sent to " + firstName );
-	})
+		sendEmail(firstName, contact["emailAddress"], "Leon Thorne", "ldthorne@brandeis.edu", "Test. Please ignore!", newTemplate); //send email function			
+	});
 }
-function loop(latestPosts){
-	for(i=0; i<contacts.length;i++){
-		var firstName = contacts[i].firstName;
-		var numMonths = contacts[i].numMonthsSinceContact;
-		console.log(renderer(firstName,numMonths,latestPosts));
-	}
-}
+
 function csvParse(csvFile){
 	var lines = csvFile.split("\n"); //split into first array every time there's a line break
 	var splitLines=[];
 	for(var i=0; i<lines.length; i++){ //loop through the first array
 		splitLines.push(lines[i].split(",")); //every time there's a ",", split into another array
 	}
-
 	var peopleObjects = [];
 	for(var i=1; i<splitLines.length-1; i++){ //loop through every element of the outside array (the rows); skip the first line because it's just the description
 		var person={};
@@ -76,25 +68,7 @@ function csvParse(csvFile){
 	return peopleObjects;//return the array containing all the people objects
 }
 
-function findLatestPosts(blog){
-	var recentPosts=[];
-	var currentDate = new Date();
-	for(var i=0; i<blog.posts.length;i++){
-		var postDate = new Date(blog.posts[i]["date"])
-		if(((currentDate-postDate)/(1000*60*60*24))<=20 && blog.posts[i]["title"]!== undefined){ //got "undefined" back because image posts don't have a title but they're considered posts
-			var blogInfo = {
-				title: blog.posts[i]["title"],
-				href: blog.posts[i]["post_url"]
-
-			};
-			recentPosts.push(blogInfo)
-		}
-	}
-	return recentPosts;
-}
-
-
-function sendEmail(to_name, to_email, from_name, from_email, subject, message_html){
+function sendEmail(to_name, to_email, from_name, from_email, subject, message_html){ //send email function. Taken from Scott's example file
 	var message = {
 	    "html": message_html,
 	    "subject": subject,
@@ -110,7 +84,7 @@ function sendEmail(to_name, to_email, from_name, from_email, subject, message_ht
 	    "preserve_recipients": true,
 	    "merge": false,
 	    "tags": [
-	        "Fullstack_Tumblrmailer_Workshop"
+	        "Daniel's Tumblr Emails"
 	    ]    
 	};
 	var async = false;
@@ -123,9 +97,3 @@ function sendEmail(to_name, to_email, from_name, from_email, subject, message_ht
 	    // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
 	});
 }
-	
-
-
-
-
-
