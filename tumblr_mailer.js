@@ -1,7 +1,15 @@
 var fs = require('fs');
+var ejs = require('ejs');
+var tumblr = require('tumblr.js');
 
 var csvFile = fs.readFileSync("friend_list.csv","utf8");
-console.log(csvParse(csvFile));
+var htmlFile = fs.readFileSync("email_template.html","utf8");
+var contacts = csvParse(csvFile);
+for(i=0; i<contacts.length;i++){
+	var firstName = contacts[i].firstName;
+	var numMonths = contacts[i].numMonthsSinceContact;
+	console.log(renderer(firstName,numMonths));
+}
 
 function csvParse(csvFile){
 	var lines = csvFile.split("\n"); //split into first array every time there's a line break
@@ -26,3 +34,16 @@ function csvParse(csvFile){
 	}
 	return peopleObjects;//return the array containing all the people objects
 }
+
+
+function renderer(firstName, numMonths){
+	var newTemplate = ejs.render(htmlFile,
+		{
+			firstName:firstName,
+			numMonthsSinceContact: numMonths
+		});	
+	return newTemplate
+}
+
+// var customTemplate = ejs.render(htmlFile);
+// console.log(customTemplate);
