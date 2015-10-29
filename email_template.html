@@ -12,9 +12,16 @@
 			since we last spoke. I'm about to begin studying at the Fullstack Academy of Code in NYC.
 		</p>
 		<p>
-				I've been blogging about my experiences at Fullstack on my blog, which you can checkout <a href="http://ldthorne.tumblr.com">here</a>.
+			I've been blogging about my experiences at Fullstack on my blog, which you can check out <a href="http://ldthorne.tumblr.com">here</a>.
 		</p>
 		<p>
+			Take a look at my latest posts: 
+			<ul>
+      			<% for(var i=0; i<latestPosts.length; i++) {%>
+         			<li><a href=<%= latestPosts[i].href %>> <%= latestPosts[i].title %></a>  </li>
+      			<% } %>
+    		</ul>
+			<p>
 			Talk soon,
 			<br>
 			Daniel (Leon)
